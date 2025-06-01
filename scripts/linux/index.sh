@@ -31,15 +31,18 @@ check_git_installed() {
 }
 
 # Function to find all Git repositories
-# Outputs repository paths to stdout, messages to stderr
 find_git_repos() {
-    echo -e "${NEON_CYAN}[*] Scanning cyberspace for Git repositories...${NC}" >&2
+    echo -e "${NEON_CYAN}[*] Scanning cyberspace for Git repositories...${NC}"
     sleep 0.3
-    find / -type d -name ".git" -not -path "/proc/*" -not -path "/sys/*" -not -path "/dev/*" -not -path "/tmp/*" 2>/dev/null | while read -r git_dir; do
+    local repo_list=()
+    while IFS= read -r git_dir; do
         repo_dir=$(dirname "$git_dir")
-        echo -e "${DARK_PURPLE}>>> Located node: $repo_dir${NC}" >&2
-        printf '%s\n' "$repo_dir"
+        repo_list+=("$repo_dir")
+    done < <(find / -type d -name ".git" -not -path "/proc/*" -not -path "/sys/*" -not -path "/dev/*" -not -path "/tmp/*" 2>/dev/null)
+    for repo in "${repo_list[@]}"; do
+        echo -e "${DARK_PURPLE}>>> Located node: $repo${NC}"
     done
+    printf '%s\n' "${repo_list[@]}"
 }
 
 # Function to display animated loading effect
@@ -57,7 +60,6 @@ display_loading() {
 # Function to perform Git operations with cyberpunk styling
 perform_git_operation() {
     local repo_dir=$1
-    # Validate repository directory
     if [ ! -d "$repo_dir" ]; then
         echo -e "${NEON_RED}[-] ERROR: Repository node $repo_dir offline or corrupted${NC}"
         return 1
@@ -72,20 +74,17 @@ perform_git_operation() {
     echo -e "\n${NEON_PINK}=== Accessing Repository: $(basename "$repo_dir") ===${NC}"
     echo -e "${DARK_PURPLE}>>> Node path: $repo_dir${NC}"
 
-    # Retrieve repository status
     local git_status staged_changes unstaged_changes branch
     git_status=$(git status --porcelain 2>/dev/null)
     staged_changes=$(echo "$git_status" | grep '^M' | wc -l)
     unstaged_changes=$(echo "$git_status" | grep '^ ' | wc -l)
     branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 
-    # Display status with cyberpunk flair
     echo -e "\n${NEON_GREEN}=== SYSTEM STATUS ===${NC}"
     echo -e "${NEON_CYAN}  Branch: ${branch}${NC}"
     echo -e "${NEON_CYAN}  Staged Data Packets: ${staged_changes}${NC}"
     echo -e "${NEON_CYAN}  Unstaged Data Packets: ${unstaged_changes}${NC}"
 
-    # Display cyberpunk-themed menu
     echo -e "\n${NEON_PINK}=== NEON GIT INTERFACE ===${NC}"
     echo -e "${NEON_CYAN}  [1] Encrypt & Commit Data${NC}"
     echo -e "${NEON_CYAN}  [2] Uplink to Remote Server${NC}"
@@ -94,14 +93,14 @@ perform_git_operation() {
     echo -e "${NEON_CYAN}  [5] Disconnect to Main Grid${NC}"
     echo -e "${NEON_CYAN}  [6] Terminate Neural Link${NC}"
 
-    # Read user input with validation
     local choice
-    read -p "${NEON_PINK}>>> Select operation [1-6]: ${NC}" choice
+    echo -e -n "${NEON_PINK}>>> Select operation [1-6]: ${NC}"
+    read choice
     case $choice in
         1)
-            # Commit changes with message
             local commit_msg
-            read -p "${NEON_CYAN}>>> Enter commit signature: ${NC}" commit_msg
+            echo -e -n "${NEON_CYAN}>>> Enter commit signature: ${NC}"
+            read commit_msg
             if [ -z "$commit_msg" ]; then
                 echo -e "${NEON_RED}[-] ERROR: Signature cannot be null${NC}"
             else
@@ -115,7 +114,6 @@ perform_git_operation() {
             perform_git_operation "$repo_dir"
             ;;
         2)
-            # Push to remote
             display_loading
             if git push origin "$branch"; then
                 echo -e "${NEON_GREEN}[+] Uplink to remote server successful${NC}"
@@ -125,7 +123,6 @@ perform_git_operation() {
             perform_git_operation "$repo_dir"
             ;;
         3)
-            # Pull from remote
             display_loading
             if git pull origin "$branch"; then
                 echo -e "${NEON_GREEN}[+] Downlink from remote server successful${NC}"
@@ -135,7 +132,6 @@ perform_git_operation() {
             perform_git_operation "$repo_dir"
             ;;
         4)
-            # Detailed status
             display_loading
             echo -e "${NEON_GREEN}=== Detailed System Scan ===${NC}"
             git status
@@ -173,37 +169,98 @@ fi
 echo -e "${NEON_GREEN}[+] Located ${#repos[@]} active repository nodes${NC}\n"
 sleep 0.5
 
-# Repository selection loop
+# Repository selection loop with filter and aligned columns
 while true; do
-    echo -e "${NEON_PINK}=== Select a Repository Node ===${NC}"
-    for i in "${!repos[@]}"; do
-        repo=${repos[$i]}
+    # Filter selection
+    echo -e "${NEON_PINK}=== Filter Repositories ===${NC}"
+    echo -e "${NEON_CYAN}  [1] Show all (default)${NC}"
+    echo -e "${NEON_CYAN}  [2] Show only with changes${NC}"
+    echo -e "${NEON_CYAN}  [3] Show only clean${NC}"
+    echo -e -n "${NEON_PINK}>>> Select filter [1-3]: ${NC}"
+    read filter_choice
+    case $filter_choice in
+        2) filter="changes" ;;
+        3) filter="clean" ;;
+        *) filter="all" ;;
+    esac
+
+    # Build displayed repositories based on filter
+    displayed_repos=()
+    displayed_statuses=()
+    for repo in "${repos[@]}"; do
         if [ -d "$repo" ]; then
-            cd "$repo"
+            cd "$repo" || continue
             status=$(git status --porcelain 2>/dev/null)
-            if [ -z "$status" ]; then
-                status_text="${NEON_GREEN}[Clean]${NC}"
-            else
-                status_text="${NEON_RED}[Changes]${NC}"
+            if [ "$filter" = "all" ] || \
+               ([ "$filter" = "changes" ] && [ -n "$status" ]) || \
+               ([ "$filter" = "clean" ] && [ -z "$status" ]); then
+                displayed_repos+=("$repo")
+                if [ -z "$status" ]; then
+                    displayed_statuses+=("Clean")
+                else
+                    displayed_statuses+=("Changes")
+                fi
             fi
-            echo -e "$((i+1)). $(basename "$repo") - $status_text"
-        else
-            echo -e "$((i+1)). $(basename "$repo") - ${NEON_RED}[Inaccessible]${NC}"
+        elif [ "$filter" = "all" ]; then
+            displayed_repos+=("$repo")
+            displayed_statuses+=("Inaccessible")
         fi
     done
-    echo -e "$(( ${#repos[@]}+1 )). Exit"
-    read -p "${NEON_PINK}>>> Enter number: ${NC}" choice
-    if [ "$choice" == "$(( ${#repos[@]}+1 ))" ]; then
+
+    if [ ${#displayed_repos[@]} -eq 0 ]; then
+        echo -e "${NEON_RED}[-] No repositories match the filter${NC}"
+        sleep 1
+        continue
+    fi
+
+    # Calculate maximum lengths for alignment
+    max_num_length=5
+    max_name_length=10
+    for i in "${!displayed_repos[@]}"; do
+        num=$((i+1))
+        if [ ${#num} -gt $max_num_length ]; then
+            max_num_length=${#num}
+        fi
+        name=$(basename "${displayed_repos[$i]}")
+        if [ ${#name} -gt $max_name_length ]; then
+            max_name_length=${#name}
+        fi
+    done
+
+    # Display repository list with aligned columns
+    echo -e "\n${NEON_PINK}=== Select a Repository Node ===${NC}"
+    printf "%-${max_num_length}s  %-${max_name_length}s  %s\n" "No" "Repository" "Status"
+    printf "%-${max_num_length}s  %-${max_name_length}s  %s\n" "--" "----------" "------"
+    for i in "${!displayed_repos[@]}"; do
+        name=$(basename "${displayed_repos[$i]}")
+        status=${displayed_statuses[$i]}
+        if [ "$status" = "Clean" ]; then
+            formatted_status="${NEON_GREEN}[Clean]${NC}"
+        elif [ "$status" = "Changes" ]; then
+            formatted_status="${NEON_RED}[Changes]${NC}"
+        else
+            formatted_status="${NEON_RED}[Inaccessible]${NC}"
+        fi
+        printf "%-${max_num_length}s  %-${max_name_length}s  %s\n" "$((i+1))" "$name" "$formatted_status"
+    done
+    echo -e "$(( ${#displayed_repos[@]}+1 )). Exit"
+
+    # Handle user selection
+    echo -e -n "${NEON_PINK}>>> Enter number: ${NC}"
+    read choice
+    if [ "$choice" == "$(( ${#displayed_repos[@]}+1 ))" ]; then
         echo -e "${NEON_PINK}>>> Terminating NEON GIT interface${NC}"
         exit 0
-    elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#repos[@]}" ]; then
-        selected_repo=${repos[$((choice-1))]}
+    elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#displayed_repos[@]}" ]; then
+        selected_repo=${displayed_repos[$((choice-1))]}
         if [ -d "$selected_repo" ]; then
             perform_git_operation "$selected_repo"
         else
             echo -e "${NEON_RED}[-] Repository node inaccessible: $selected_repo${NC}"
+            sleep 1
         fi
     else
         echo -e "${NEON_RED}[-] Invalid selection${NC}"
+        sleep 1
     fi
 done
