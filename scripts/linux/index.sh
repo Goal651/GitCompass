@@ -6,7 +6,7 @@ NEON_CYAN='\033[1;36m'
 NEON_GREEN='\033[1;32m'
 NEON_RED='\033[1;31m'
 DARK_PURPLE='\033[0;35m'
-NC='\033[0m' # No Color
+NC='\033[0;37m' # No Color
 
 # Function to display cyberpunk-themed header
 display_header() {
@@ -49,9 +49,9 @@ find_git_repos() {
 display_loading() {
     local spinstr='|/-\'
     local i=0
-    for ((j=0; j<10; j++)); do
-        printf "\r${NEON_CYAN}[%s] Processing...${NC}" "${spinstr:$((i%4)):1}"
-        i=$((i+1))
+    for ((j = 0; j < 10; j++)); do
+        printf "\r${NEON_CYAN}[%s] Processing...${NC}" "${spinstr:$((i % 4)):1}"
+        i=$((i + 1))
         sleep 0.1
     done
     printf "\r"
@@ -97,61 +97,61 @@ perform_git_operation() {
     echo -e -n "${NEON_PINK}>>> Select operation [1-6]: ${NC}"
     read choice
     case $choice in
-        1)
-            local commit_msg
-            echo -e -n "${NEON_CYAN}>>> Enter commit signature: ${NC}"
-            read commit_msg
-            if [ -z "$commit_msg" ]; then
-                echo -e "${NEON_RED}[-] ERROR: Signature cannot be null${NC}"
-            else
-                display_loading
-                if git add . && git commit -m "$commit_msg"; then
-                    echo -e "${NEON_GREEN}[+] Data encrypted and committed${NC}"
-                else
-                    echo -e "${NEON_RED}[-] Commit operation failed${NC}"
-                fi
-            fi
-            perform_git_operation "$repo_dir"
-            ;;
-        2)
+    1)
+        local commit_msg
+        echo -e -n "${NEON_CYAN}>>> Enter commit signature: ${NC}"
+        read commit_msg
+        if [ -z "$commit_msg" ]; then
+            echo -e "${NEON_RED}[-] ERROR: Signature cannot be null${NC}"
+        else
             display_loading
-            if git push origin "$branch"; then
-                echo -e "${NEON_GREEN}[+] Uplink to remote server successful${NC}"
+            if git add . && git commit -m "$commit_msg"; then
+                echo -e "${NEON_GREEN}[+] Data encrypted and committed${NC}"
             else
-                echo -e "${NEON_RED}[-] Uplink failed. Check network or credentials${NC}"
+                echo -e "${NEON_RED}[-] Commit operation failed${NC}"
             fi
-            perform_git_operation "$repo_dir"
-            ;;
-        3)
-            display_loading
-            if git pull origin "$branch"; then
-                echo -e "${NEON_GREEN}[+] Downlink from remote server successful${NC}"
-            else
-                echo -e "${NEON_RED}[-] Downlink failed. Check network or conflicts${NC}"
-            fi
-            perform_git_operation "$repo_dir"
-            ;;
-        4)
-            display_loading
-            echo -e "${NEON_GREEN}=== Detailed System Scan ===${NC}"
-            git status
-            echo -e "\n${NEON_CYAN}>>> Press Enter to return to interface...${NC}"
-            read
-            perform_git_operation "$repo_dir"
-            ;;
-        5)
-            echo -e "${NEON_PINK}>>> Disconnecting from $(basename "$repo_dir")${NC}"
-            return 0
-            ;;
-        6)
-            echo -e "${NEON_PINK}>>> Terminating neural link to NEON GIT${NC}"
-            sleep 0.5
-            exit 0
-            ;;
-        *)
-            echo -e "${NEON_RED}[-] Invalid operation code. Select 1-6${NC}"
-            perform_git_operation "$repo_dir"
-            ;;
+        fi
+        perform_git_operation "$repo_dir"
+        ;;
+    2)
+        display_loading
+        if git push origin "$branch"; then
+            echo -e "${NEON_GREEN}[+] Uplink to remote server successful${NC}"
+        else
+            echo -e "${NEON_RED}[-] Uplink failed. Check network or credentials${NC}"
+        fi
+        perform_git_operation "$repo_dir"
+        ;;
+    3)
+        display_loading
+        if git pull origin "$branch"; then
+            echo -e "${NEON_GREEN}[+] Downlink from remote server successful${NC}"
+        else
+            echo -e "${NEON_RED}[-] Downlink failed. Check network or conflicts${NC}"
+        fi
+        perform_git_operation "$repo_dir"
+        ;;
+    4)
+        display_loading
+        echo -e "${NEON_GREEN}=== Detailed System Scan ===${NC}"
+        git status
+        echo -e "\n${NEON_CYAN}>>> Press Enter to return to interface...${NC}"
+        read
+        perform_git_operation "$repo_dir"
+        ;;
+    5)
+        echo -e "${NEON_PINK}>>> Disconnecting from $(basename "$repo_dir")${NC}"
+        return 0
+        ;;
+    6)
+        echo -e "${NEON_PINK}>>> Terminating neural link to NEON GIT${NC}"
+        sleep 0.5
+        exit 0
+        ;;
+    *)
+        echo -e "${NEON_RED}[-] Invalid operation code. Select 1-6${NC}"
+        perform_git_operation "$repo_dir"
+        ;;
     esac
 }
 
@@ -179,9 +179,9 @@ while true; do
     echo -e -n "${NEON_PINK}>>> Select filter [1-3]: ${NC}"
     read filter_choice
     case $filter_choice in
-        2) filter="changes" ;;
-        3) filter="clean" ;;
-        *) filter="all" ;;
+    2) filter="changes" ;;
+    3) filter="clean" ;;
+    *) filter="all" ;;
     esac
 
     # Build displayed repositories based on filter
@@ -191,9 +191,9 @@ while true; do
         if [ -d "$repo" ]; then
             cd "$repo" || continue
             status=$(git status --porcelain 2>/dev/null)
-            if [ "$filter" = "all" ] || \
-               ([ "$filter" = "changes" ] && [ -n "$status" ]) || \
-               ([ "$filter" = "clean" ] && [ -z "$status" ]); then
+            if [ "$filter" = "all" ] ||
+                ([ "$filter" = "changes" ] && [ -n "$status" ]) ||
+                ([ "$filter" = "clean" ] && [ -z "$status" ]); then
                 displayed_repos+=("$repo")
                 if [ -z "$status" ]; then
                     displayed_statuses+=("Clean")
@@ -217,7 +217,7 @@ while true; do
     max_num_length=5
     max_name_length=10
     for i in "${!displayed_repos[@]}"; do
-        num=$((i+1))
+        num=$((i + 1))
         if [ ${#num} -gt $max_num_length ]; then
             max_num_length=${#num}
         fi
@@ -235,24 +235,24 @@ while true; do
         name=$(basename "${displayed_repos[$i]}")
         status=${displayed_statuses[$i]}
         if [ "$status" = "Clean" ]; then
-            formatted_status="${NEON_GREEN}[Clean]${NC}"
+            formatted_status="${NEON_GREEN}[Clean]"
         elif [ "$status" = "Changes" ]; then
-            formatted_status="${NEON_RED}[Changes]${NC}"
+            formatted_status="${NEON_RED}[Changes]"
         else
             formatted_status="${NEON_RED}[Inaccessible]${NC}"
         fi
-        printf "%-${max_num_length}s  %-${max_name_length}s  %s\n" "$((i+1))" "$name" "$formatted_status"
+        printf "%-${max_num_length}s  %-${max_name_length}s  %s\n" "$((i + 1))" "$name" "$formatted_status"
     done
-    echo -e "$(( ${#displayed_repos[@]}+1 )). Exit"
+    echo -e "$((${#displayed_repos[@]} + 1)). Exit"
 
     # Handle user selection
     echo -e -n "${NEON_PINK}>>> Enter number: ${NC}"
     read choice
-    if [ "$choice" == "$(( ${#displayed_repos[@]}+1 ))" ]; then
+    if [ "$choice" == "$((${#displayed_repos[@]} + 1))" ]; then
         echo -e "${NEON_PINK}>>> Terminating NEON GIT interface${NC}"
         exit 0
     elif [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le "${#displayed_repos[@]}" ]; then
-        selected_repo=${displayed_repos[$((choice-1))]}
+        selected_repo=${displayed_repos[$((choice - 1))]}
         if [ -d "$selected_repo" ]; then
             perform_git_operation "$selected_repo"
         else
