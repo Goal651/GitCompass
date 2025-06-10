@@ -1,8 +1,21 @@
 import sys
 import os
 import subprocess
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QPushButton, QLineEdit, QLabel, QProgressBar, QMessageBox
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QListWidget,
+    QPushButton,
+    QLineEdit,
+    QLabel,
+    QProgressBar,
+    QMessageBox,
+)
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
+
 
 class GitScannerThread(QThread):
     progress = pyqtSignal(int)
@@ -11,14 +24,27 @@ class GitScannerThread(QThread):
 
     def run(self):
         home_dir = os.path.expanduser("~")
-        total_dirs = sum([len(dirs) for _, dirs, _ in os.walk(home_dir)])
+        print(f"Scanning directory: {home_dir}")  # Debug
+        # Count total accessible directories
+        total_dirs = 0
+        for root, dirs, _ in os.walk(home_dir):
+            if os.access(root, os.R_OK):
+                total_dirs += len(dirs)
+        # Scan for repositories
         scanned = 0
         for root, dirs, _ in os.walk(home_dir):
+            if not os.access(root, os.R_OK):
+                print(f"Skipping inaccessible directory: {root}")  # Debug
+                continue
             if ".git" in dirs:
+                print(f"Found repo: {root}")  # Debug
                 self.repo_found.emit(root)
             scanned += len(dirs)
-            self.progress.emit(int((scanned / total_dirs) * 100) if total_dirs > 0 else 100)
+            self.progress.emit(
+                int((scanned / total_dirs) * 100) if total_dirs > 0 else 100
+            )
         self.scan_complete.emit()
+
 
 class GitManager(QMainWindow):
     def __init__(self):
@@ -80,7 +106,7 @@ class GitManager(QMainWindow):
         self.selected_repo = item.text()
 
     def add_commit(self):
-        if not hasattr(self, 'selected_repo'):
+        if not hasattr(self, "selected_repo"):
             QMessageBox.warning(self, "Error", "Please select a repository.")
             return
         msg = self.commit_msg.text()
@@ -89,27 +115,34 @@ class GitManager(QMainWindow):
             return
         try:
             subprocess.run(["git", "-C", self.selected_repo, "add", "."], check=True)
-            subprocess.run(["git", "-C", self.selected_repo, "commit", "-m", msg], check=True)
+            subprocess.run(
+                ["git", "-C", self.selected_repo, "commit", "-m", msg], check=True
+            )
             QMessageBox.information(self, "Success", "Changes committed.")
         except subprocess.CalledProcessError:
             QMessageBox.critical(self, "Error", "Commit failed.")
 
     def push(self):
-        if not hasattr(self, 'selected_repo'):
+        if not hasattr(self, "selected_repo"):
             QMessageBox.warning(self, "Error", "Please select a repository.")
             return
         try:
-            subprocess.run(["git", "-C", self.selected_repo, "push", "origin", "main"], check=True)
+            subprocess.run(
+                ["git", "-C", self.selected_repo, "push", "origin", "main"], check=True
+            )
             QMessageBox.information(self, "Success", "Pushed to remote.")
         except subprocess.CalledProcessError:
             QMessageBox.critical(self, "Error", "Push failed.")
 
     def show_status(self):
-        if not hasattr(self, 'selected_repo'):
+        if not hasattr(self, "selected_repo"):
             QMessageBox.warning(self, "Error", "Please select a repository.")
             return
-        result = subprocess.run(["git", "-C", self.selected_repo, "status"], capture_output=True, text=True)
+        result = subprocess.run(
+            ["git", "-C", self.selected_repo, "status"], capture_output=True, text=True
+        )
         QMessageBox.information(self, "Git Status", result.stdout)
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
