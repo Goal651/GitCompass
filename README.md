@@ -1,4 +1,5 @@
-Git Repository Manager
+# Git Repository Manager
+
 A cross-platform tool to scan your computer for Git repositories and perform Git operations (add, commit, push) with a modern GUI.
 Features
 
@@ -11,7 +12,7 @@ Installation
 
 Install Python 3.6+.
 Install dependencies: pip install PyQt5.
-Clone the repository: git clone https://github.com/yourusername/git-manager.git.
+Clone the repository: git clone <https://github.com/goal651/git-manager.git>.
 Run the tool: python git_manager.py.
 
 Usage
