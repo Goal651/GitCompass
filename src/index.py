@@ -3,7 +3,8 @@ import os
 import subprocess
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem,
-    QPushButton, QLineEdit, QLabel, QProgressBar, QMessageBox, QHeaderView, QInputDialog, QListWidget, QListWidgetItem, QSplitter, QSizePolicy
+    QPushButton, QLineEdit, QLabel, QProgressBar, QMessageBox, QHeaderView, QInputDialog,
+    QListWidget, QListWidgetItem, QSplitter, QSizePolicy, QGroupBox
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QSize
 from PyQt5.QtGui import QPalette, QColor, QFont
@@ -174,47 +175,92 @@ class GitManager(QMainWindow):
         # Button bar for repo actions (at top, below status)
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(14)
-        for btn in [
-            ("📝 Add & Commit", self.add_commit, "Add all changes and commit (Ctrl+C)", "Ctrl+C"),
-            ("⬆️ Push", self.push, "Push to remote (Ctrl+P)", "Ctrl+P"),
-            ("⬇️ Pull", self.pull, "Pull latest changes (Ctrl+L)", "Ctrl+L"),
-            ("📋 Status", self.show_status, "Show git status (Ctrl+S)", "Ctrl+S"),
-            ("📜 Log", self.show_log, "Show recent commit log (Ctrl+G)", "Ctrl+G"),
-            ("📦 Stash", self.stash, "Stash changes (Ctrl+T)", "Ctrl+T"),
-            ("📤 Pop Stash", self.pop_stash, "Pop latest stash (Ctrl+O)", "Ctrl+O"),
-            ("🔍 Advanced Log", self.advanced_log, "Show advanced log (Ctrl+A)", "Ctrl+A"),
-            ("🗑️ Delete Repo", self.delete_repo, "Delete selected repository", None),
-            ("➕ Clone Repo", self.clone_repo, "Clone a new repository", None),
-            ("📊 Batch Status", self.batch_status, "Show status for all repositories", None),
-            ("💾 Export", self.export_repos, "Export repository list/statuses", None),
-            ("📂 Import", self.import_repos, "Import repository list/statuses", None),
-            ("⚙️ Settings", self.show_settings, "Settings/configuration", None),
-            ("❓ Help/About", self.show_help, "Show help/about dialog", None),
-        ]:
-            b = QPushButton(btn[0])
-            b.setToolTip(btn[2])
-            b.clicked.connect(btn[1])
-            b.setStyleSheet('''
-                QPushButton {
-                    background-color: #5865f2;
-                    color: #fff;
-                    border-radius: 7px;
-                    padding: 10px 18px;
-                    font-size: 16px;
-                    font-weight: bold;
-                }
-                QPushButton:hover {
-                    background-color: #4752c4;
-                }
-            ''')
-            if btn[3]:
-                b.setShortcut(btn[3])
-            setattr(self, btn[0].replace(' ', '_').replace('&', '').replace('(', '').replace(')', '').replace('=', '').replace('-', '').replace('?', '').replace('/', '').replace('.', '').replace('!', '').replace('📝', '').replace('⬆️', '').replace('⬇️', '').replace('📋', '').replace('📜', '').replace('📦', '').replace('📤', '').replace('🔍', '').replace('🗑️', '').replace('➕', '').replace('📊', '').replace('💾', '').replace('📂', '').replace('⚙️', '').replace('❓', '').strip('_').lower() + '_btn', b)
-            btn_layout.addWidget(b)
+        # Explicitly create each button with the correct variable name
+        self.add_commit_btn = QPushButton("📝 Add & Commit")
+        self.add_commit_btn.setToolTip("Add all changes and commit (Ctrl+C)")
+        self.add_commit_btn.clicked.connect(self.add_commit)
+        self.add_commit_btn.setShortcut("Ctrl+C")
+        btn_layout.addWidget(self.add_commit_btn)
+
+        self.push_btn = QPushButton("⬆️ Push")
+        self.push_btn.setToolTip("Push to remote (Ctrl+P)")
+        self.push_btn.clicked.connect(self.push)
+        self.push_btn.setShortcut("Ctrl+P")
+        btn_layout.addWidget(self.push_btn)
+
+        self.pull_btn = QPushButton("⬇️ Pull")
+        self.pull_btn.setToolTip("Pull latest changes (Ctrl+L)")
+        self.pull_btn.clicked.connect(self.pull)
+        self.pull_btn.setShortcut("Ctrl+L")
+        btn_layout.addWidget(self.pull_btn)
+
+        self.status_btn = QPushButton("📋 Status")
+        self.status_btn.setToolTip("Show git status (Ctrl+S)")
+        self.status_btn.clicked.connect(self.show_status)
+        self.status_btn.setShortcut("Ctrl+S")
+        btn_layout.addWidget(self.status_btn)
+
+        self.log_btn = QPushButton("📜 Log")
+        self.log_btn.setToolTip("Show recent commit log (Ctrl+G)")
+        self.log_btn.clicked.connect(self.show_log)
+        self.log_btn.setShortcut("Ctrl+G")
+        btn_layout.addWidget(self.log_btn)
+
+        self.stash_btn = QPushButton("📦 Stash")
+        self.stash_btn.setToolTip("Stash changes (Ctrl+T)")
+        self.stash_btn.clicked.connect(self.stash)
+        self.stash_btn.setShortcut("Ctrl+T")
+        btn_layout.addWidget(self.stash_btn)
+
+        self.pop_stash_btn = QPushButton("📤 Pop Stash")
+        self.pop_stash_btn.setToolTip("Pop latest stash (Ctrl+O)")
+        self.pop_stash_btn.clicked.connect(self.pop_stash)
+        self.pop_stash_btn.setShortcut("Ctrl+O")
+        btn_layout.addWidget(self.pop_stash_btn)
+
+        self.advanced_log_btn = QPushButton("🔍 Advanced Log")
+        self.advanced_log_btn.setToolTip("Show advanced log (Ctrl+A)")
+        self.advanced_log_btn.clicked.connect(self.advanced_log)
+        self.advanced_log_btn.setShortcut("Ctrl+A")
+        btn_layout.addWidget(self.advanced_log_btn)
+
+        self.delete_repo_btn = QPushButton("🗑️ Delete Repo")
+        self.delete_repo_btn.setToolTip("Delete selected repository")
+        self.delete_repo_btn.clicked.connect(self.delete_repo)
+        btn_layout.addWidget(self.delete_repo_btn)
+
+        self.clone_repo_btn = QPushButton("➕ Clone Repo")
+        self.clone_repo_btn.setToolTip("Clone a new repository")
+        self.clone_repo_btn.clicked.connect(self.clone_repo)
+        btn_layout.addWidget(self.clone_repo_btn)
+
+        self.batch_status_btn = QPushButton("📊 Batch Status")
+        self.batch_status_btn.setToolTip("Show status for all repositories")
+        self.batch_status_btn.clicked.connect(self.batch_status)
+        btn_layout.addWidget(self.batch_status_btn)
+
+        self.export_btn = QPushButton("💾 Export")
+        self.export_btn.setToolTip("Export repository list/statuses")
+        self.export_btn.clicked.connect(self.export_repos)
+        btn_layout.addWidget(self.export_btn)
+
+        self.import_btn = QPushButton("📂 Import")
+        self.import_btn.setToolTip("Import repository list/statuses")
+        self.import_btn.clicked.connect(self.import_repos)
+        btn_layout.addWidget(self.import_btn)
+
+        self.settings_btn = QPushButton("⚙️ Settings")
+        self.settings_btn.setToolTip("Settings/configuration")
+        self.settings_btn.clicked.connect(self.show_settings)
+        btn_layout.addWidget(self.settings_btn)
+
+        self.help_btn = QPushButton("❓ Help/About")
+        self.help_btn.setToolTip("Show help/about dialog")
+        self.help_btn.clicked.connect(self.show_help)
+        btn_layout.addWidget(self.help_btn)
         main_layout.addLayout(btn_layout)
 
         # Changed files widget (always visible)
-        from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QGroupBox
         self.changed_files_group = QGroupBox("Changed Files")
         self.changed_files_group.setStyleSheet('''
             QGroupBox {
@@ -277,16 +323,16 @@ class GitManager(QMainWindow):
         splitter.addWidget(main_panel)
         splitter.setSizes([320, 900])
 
-        # Start scanning
+        # Show welcome dialog on first launch
+        self.show_welcome()
+
+        # Start scanning (moved to end to avoid AttributeError)
         self.scanner = GitScannerThread()
         self.threads.append(self.scanner)
         self.scanner.progress.connect(self.progress_bar.setValue)
         self.scanner.repo_found.connect(self.add_repo)
         self.scanner.scan_complete.connect(lambda: self.progress_bar.setValue(100))
         self.scanner.start()
-
-        # Show welcome dialog on first launch
-        self.show_welcome()
 
     def set_discord_theme(self):
         palette = QPalette()
@@ -361,6 +407,8 @@ class GitManager(QMainWindow):
         self.refresh_main_panel()
 
     def refresh_sidebar(self):
+        if not hasattr(self, 'search_bar'):
+            return
         filter_text = self.search_bar.text().lower()
         self.repo_list.clear()
         for repo_path in self.repos:
