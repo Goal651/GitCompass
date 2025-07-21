@@ -106,20 +106,24 @@ class GitManager(QMainWindow):
         # Sidebar: Repo list
         sidebar_widget = QWidget()
         sidebar_layout = QVBoxLayout(sidebar_widget)
-        sidebar_layout.setContentsMargins(8, 8, 8, 8)
-        sidebar_layout.setSpacing(8)
+        sidebar_layout.setContentsMargins(0, 0, 0, 0)
+        sidebar_layout.setSpacing(0)
         sidebar_label = QLabel("Repositories")
-        sidebar_label.setFont(QFont("Arial", 12, QFont.Bold))
+        sidebar_label.setFont(QFont("Arial", 15, QFont.Bold))
+        sidebar_label.setStyleSheet("padding: 16px 0 8px 16px; color: #fff;")
         sidebar_layout.addWidget(sidebar_label)
         self.repo_list = QListWidget()
         self.repo_list.setAlternatingRowColors(True)
         self.repo_list.setStyleSheet('''
             QListWidget {
-                background-color: #2f3136;
+                background-color: #23272a;
                 color: #fff;
-                border-radius: 8px;
-                border: 1px solid #23272a;
-                font-size: 14px;
+                border-right: 2px solid #18191c;
+                font-size: 17px;
+                padding: 0 0 0 0;
+            }
+            QListWidget::item {
+                padding: 10px 0 10px 12px;
             }
             QListWidget::item:selected {
                 background-color: #5865f2;
@@ -129,114 +133,149 @@ class GitManager(QMainWindow):
                 background-color: #4752c4;
             }
         ''')
-        self.repo_list.setFixedWidth(260)
+        self.repo_list.setFixedWidth(300)
         self.repo_list.itemClicked.connect(self.sidebar_select_repo)
         sidebar_layout.addWidget(self.repo_list)
         sidebar_layout.addStretch(1)
+        sidebar_widget.setStyleSheet('''
+            QWidget {
+                background-color: #23272a;
+                border-right: 2px solid #18191c;
+            }
+        ''')
         splitter.addWidget(sidebar_widget)
 
         # Main panel: Actions and details
         main_panel = QWidget()
+        main_panel.setStyleSheet('''
+            QWidget {
+                background-color: #36393f;
+                border-left: 2px solid #18191c;
+            }
+        ''')
         main_layout = QVBoxLayout(main_panel)
-        main_layout.setContentsMargins(16, 16, 16, 16)
-        main_layout.setSpacing(12)
+        main_layout.setContentsMargins(32, 32, 32, 32)
+        main_layout.setSpacing(18)
 
-        # Search/filter bar
-        search_layout = QHBoxLayout()
-        self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Search repositories by name or path...")
-        self.search_bar.textChanged.connect(self.filter_repos)
-        search_layout.addWidget(QLabel("Search:"))
-        search_layout.addWidget(self.search_bar)
-        main_layout.addLayout(search_layout)
-
-        # Repo details/status
+        # Repo details/status at top
         self.repo_title = QLabel("")
-        self.repo_title.setFont(QFont("Arial", 14, QFont.Bold))
+        self.repo_title.setFont(QFont("Arial", 22, QFont.Bold))
+        self.repo_title.setStyleSheet("color: #fff; padding-bottom: 2px;")
         main_layout.addWidget(self.repo_title)
+        self.repo_path_label = QLabel("")
+        self.repo_path_label.setFont(QFont("Arial", 13))
+        self.repo_path_label.setStyleSheet("color: #b9bbbe; padding-bottom: 2px;")
+        main_layout.addWidget(self.repo_path_label)
         self.repo_status_label = QLabel("")
+        self.repo_status_label.setFont(QFont("Arial", 15))
+        self.repo_status_label.setStyleSheet("color: #fff; padding-bottom: 8px;")
         main_layout.addWidget(self.repo_status_label)
 
-        # Button bar for repo actions
+        # Button bar for repo actions (at top, below status)
         btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(10)
-        self.commit_btn = QPushButton("📝 Add & Commit")
-        self.commit_btn.setToolTip("Add all changes and commit (Ctrl+C)")
-        self.commit_btn.clicked.connect(self.add_commit)
-        self.commit_btn.setShortcut("Ctrl+C")
-        btn_layout.addWidget(self.commit_btn)
-        self.push_btn = QPushButton("⬆️ Push")
-        self.push_btn.setToolTip("Push to remote (Ctrl+P)")
-        self.push_btn.clicked.connect(self.push)
-        self.push_btn.setShortcut("Ctrl+P")
-        btn_layout.addWidget(self.push_btn)
-        self.pull_btn = QPushButton("⬇️ Pull")
-        self.pull_btn.setToolTip("Pull latest changes (Ctrl+L)")
-        self.pull_btn.clicked.connect(self.pull)
-        self.pull_btn.setShortcut("Ctrl+L")
-        btn_layout.addWidget(self.pull_btn)
-        self.status_btn = QPushButton("📋 Status")
-        self.status_btn.setToolTip("Show git status (Ctrl+S)")
-        self.status_btn.clicked.connect(self.show_status)
-        self.status_btn.setShortcut("Ctrl+S")
-        btn_layout.addWidget(self.status_btn)
-        self.log_btn = QPushButton("📜 Log")
-        self.log_btn.setToolTip("Show recent commit log (Ctrl+G)")
-        self.log_btn.clicked.connect(self.show_log)
-        self.log_btn.setShortcut("Ctrl+G")
-        btn_layout.addWidget(self.log_btn)
-        self.stash_btn = QPushButton("📦 Stash")
-        self.stash_btn.setToolTip("Stash changes (Ctrl+T)")
-        self.stash_btn.clicked.connect(self.stash)
-        self.stash_btn.setShortcut("Ctrl+T")
-        btn_layout.addWidget(self.stash_btn)
-        self.pop_btn = QPushButton("📤 Pop Stash")
-        self.pop_btn.setToolTip("Pop latest stash (Ctrl+O)")
-        self.pop_btn.clicked.connect(self.pop_stash)
-        self.pop_btn.setShortcut("Ctrl+O")
-        btn_layout.addWidget(self.pop_btn)
-        self.advlog_btn = QPushButton("🔍 Advanced Log")
-        self.advlog_btn.setToolTip("Show advanced log (Ctrl+A)")
-        self.advlog_btn.clicked.connect(self.advanced_log)
-        self.advlog_btn.setShortcut("Ctrl+A")
-        btn_layout.addWidget(self.advlog_btn)
-        self.delete_btn = QPushButton("🗑️ Delete Repo")
-        self.delete_btn.setToolTip("Delete selected repository")
-        self.delete_btn.clicked.connect(self.delete_repo)
-        btn_layout.addWidget(self.delete_btn)
-        self.clone_btn = QPushButton("➕ Clone Repo")
-        self.clone_btn.setToolTip("Clone a new repository")
-        self.clone_btn.clicked.connect(self.clone_repo)
-        btn_layout.addWidget(self.clone_btn)
-        self.batch_btn = QPushButton("📊 Batch Status")
-        self.batch_btn.setToolTip("Show status for all repositories")
-        self.batch_btn.clicked.connect(self.batch_status)
-        btn_layout.addWidget(self.batch_btn)
-        self.export_btn = QPushButton("💾 Export")
-        self.export_btn.setToolTip("Export repository list/statuses")
-        self.export_btn.clicked.connect(self.export_repos)
-        btn_layout.addWidget(self.export_btn)
-        self.import_btn = QPushButton("📂 Import")
-        self.import_btn.setToolTip("Import repository list/statuses")
-        self.import_btn.clicked.connect(self.import_repos)
-        btn_layout.addWidget(self.import_btn)
-        self.settings_btn = QPushButton("⚙️ Settings")
-        self.settings_btn.setToolTip("Settings/configuration")
-        self.settings_btn.clicked.connect(self.show_settings)
-        btn_layout.addWidget(self.settings_btn)
-        self.help_btn = QPushButton("❓ Help/About")
-        self.help_btn.setToolTip("Show help/about dialog")
-        self.help_btn.clicked.connect(self.show_help)
-        btn_layout.addWidget(self.help_btn)
+        btn_layout.setSpacing(14)
+        for btn in [
+            ("📝 Add & Commit", self.add_commit, "Add all changes and commit (Ctrl+C)", "Ctrl+C"),
+            ("⬆️ Push", self.push, "Push to remote (Ctrl+P)", "Ctrl+P"),
+            ("⬇️ Pull", self.pull, "Pull latest changes (Ctrl+L)", "Ctrl+L"),
+            ("📋 Status", self.show_status, "Show git status (Ctrl+S)", "Ctrl+S"),
+            ("📜 Log", self.show_log, "Show recent commit log (Ctrl+G)", "Ctrl+G"),
+            ("📦 Stash", self.stash, "Stash changes (Ctrl+T)", "Ctrl+T"),
+            ("📤 Pop Stash", self.pop_stash, "Pop latest stash (Ctrl+O)", "Ctrl+O"),
+            ("🔍 Advanced Log", self.advanced_log, "Show advanced log (Ctrl+A)", "Ctrl+A"),
+            ("🗑️ Delete Repo", self.delete_repo, "Delete selected repository", None),
+            ("➕ Clone Repo", self.clone_repo, "Clone a new repository", None),
+            ("📊 Batch Status", self.batch_status, "Show status for all repositories", None),
+            ("💾 Export", self.export_repos, "Export repository list/statuses", None),
+            ("📂 Import", self.import_repos, "Import repository list/statuses", None),
+            ("⚙️ Settings", self.show_settings, "Settings/configuration", None),
+            ("❓ Help/About", self.show_help, "Show help/about dialog", None),
+        ]:
+            b = QPushButton(btn[0])
+            b.setToolTip(btn[2])
+            b.clicked.connect(btn[1])
+            b.setStyleSheet('''
+                QPushButton {
+                    background-color: #5865f2;
+                    color: #fff;
+                    border-radius: 7px;
+                    padding: 10px 18px;
+                    font-size: 16px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #4752c4;
+                }
+            ''')
+            if btn[3]:
+                b.setShortcut(btn[3])
+            setattr(self, btn[0].replace(' ', '_').replace('&', '').replace('(', '').replace(')', '').replace('=', '').replace('-', '').replace('?', '').replace('/', '').replace('.', '').replace('!', '').replace('📝', '').replace('⬆️', '').replace('⬇️', '').replace('📋', '').replace('📜', '').replace('📦', '').replace('📤', '').replace('🔍', '').replace('🗑️', '').replace('➕', '').replace('📊', '').replace('💾', '').replace('📂', '').replace('⚙️', '').replace('❓', '').strip('_').lower() + '_btn', b)
+            btn_layout.addWidget(b)
         main_layout.addLayout(btn_layout)
 
-        # Progress bar
+        # Changed files widget (always visible)
+        from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QGroupBox
+        self.changed_files_group = QGroupBox("Changed Files")
+        self.changed_files_group.setStyleSheet('''
+            QGroupBox {
+                font-size: 16px;
+                font-weight: bold;
+                border: 2px solid #5865f2;
+                border-radius: 8px;
+                margin-top: 10px;
+                background-color: #23272a;
+                color: #fff;
+            }
+            QGroupBox:title {
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 3px 0 3px;
+            }
+        ''')
+        self.changed_files_widget = QTableWidget(0, 3)
+        self.changed_files_widget.setHorizontalHeaderLabels(["", "File", "Status"])
+        self.changed_files_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.changed_files_widget.setEditTriggers(QTableWidget.NoEditTriggers)
+        self.changed_files_widget.setAlternatingRowColors(True)
+        self.changed_files_widget.setStyleSheet('''
+            QTableWidget {
+                font-size: 15px;
+                background-color: #36393f;
+                color: #fff;
+                border-radius: 6px;
+                border: 1px solid #23272a;
+                alternate-background-color: #2f3136;
+            }
+            QTableWidget::item:selected {
+                background-color: #5865f2;
+                color: #fff;
+            }
+        ''')
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.changed_files_widget)
+        self.changed_files_group.setLayout(vbox)
+        main_layout.addWidget(self.changed_files_group)
+
+        # Progress bar at bottom
         self.progress_bar = QProgressBar()
         self.progress_bar.setValue(0)
+        self.progress_bar.setStyleSheet('''
+            QProgressBar {
+                background-color: #23272a;
+                color: #fff;
+                border-radius: 6px;
+                text-align: center;
+                font-size: 16px;
+                margin-top: 18px;
+            }
+            QProgressBar::chunk {
+                background-color: #5865f2;
+            }
+        ''')
         main_layout.addWidget(self.progress_bar)
 
         splitter.addWidget(main_panel)
-        splitter.setSizes([260, 800])
+        splitter.setSizes([320, 900])
 
         # Start scanning
         self.scanner = GitScannerThread()
@@ -343,63 +382,18 @@ class GitManager(QMainWindow):
         repo = self.get_selected_repo()
         if not repo:
             self.repo_title.setText("")
+            self.repo_path_label.setText("")
             self.repo_status_label.setText("")
-            if hasattr(self, 'changed_files_widget'):
-                self.changed_files_widget.hide()
-            for btn in [self.commit_btn, self.push_btn, self.pull_btn, self.status_btn, self.log_btn, self.stash_btn, self.pop_btn, self.advlog_btn, self.delete_btn]:
+            self.changed_files_widget.setRowCount(0)
+            for btn in [self.add_commit_btn, self.push_btn, self.pull_btn, self.status_btn, self.log_btn, self.stash_btn, self.pop_stash_btn, self.advanced_log_btn, self.delete_repo_btn]:
                 btn.setEnabled(False)
             return
         emoji, name, path, status_msg, changed_files = self.repo_status.get(repo, ("", "", repo, "", []))
         self.repo_title.setText(f"{emoji} {name}")
-        self.repo_status_label.setText(f"<span style='font-size:15px;'><b>Path:</b> {path}<br><b>Status:</b> {status_msg}</span>")
-        for btn in [self.commit_btn, self.push_btn, self.pull_btn, self.status_btn, self.log_btn, self.stash_btn, self.pop_btn, self.advlog_btn, self.delete_btn]:
+        self.repo_path_label.setText(f"{path}")
+        self.repo_status_label.setText(f"<b>Status:</b> {status_msg}")
+        for btn in [self.add_commit_btn, self.push_btn, self.pull_btn, self.status_btn, self.log_btn, self.stash_btn, self.pop_stash_btn, self.advanced_log_btn, self.delete_repo_btn]:
             btn.setEnabled(True)
-        # Changed files widget
-        from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QGroupBox
-        if not hasattr(self, 'changed_files_group'):
-            self.changed_files_group = QGroupBox("Changed Files")
-            self.changed_files_group.setStyleSheet('''
-                QGroupBox {
-                    font-size: 16px;
-                    font-weight: bold;
-                    border: 2px solid #5865f2;
-                    border-radius: 8px;
-                    margin-top: 10px;
-                    background-color: #23272a;
-                    color: #fff;
-                }
-                QGroupBox:title {
-                    subcontrol-origin: margin;
-                    left: 10px;
-                    padding: 0 3px 0 3px;
-                }
-            ''')
-            self.changed_files_widget = QTableWidget(0, 3)
-            self.changed_files_widget.setHorizontalHeaderLabels(["", "File", "Status"])
-            self.changed_files_widget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-            self.changed_files_widget.setEditTriggers(QTableWidget.NoEditTriggers)
-            self.changed_files_widget.setAlternatingRowColors(True)
-            self.changed_files_widget.setStyleSheet('''
-                QTableWidget {
-                    font-size: 15px;
-                    background-color: #36393f;
-                    color: #fff;
-                    border-radius: 6px;
-                    border: 1px solid #23272a;
-                    alternate-background-color: #2f3136;
-                }
-                QTableWidget::item:selected {
-                    background-color: #5865f2;
-                    color: #fff;
-                }
-            ''')
-            vbox = QVBoxLayout()
-            vbox.addWidget(self.changed_files_widget)
-            self.changed_files_group.setLayout(vbox)
-            # Insert after status label
-            main_panel = self.centralWidget().widget(1)
-            main_layout = main_panel.layout()
-            main_layout.insertWidget(3, self.changed_files_group)
         self.changed_files_widget.setRowCount(len(changed_files))
         for row, (icon, file, status) in enumerate(changed_files):
             icon_item = QTableWidgetItem(icon)
